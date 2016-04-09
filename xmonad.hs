@@ -23,7 +23,7 @@ import           XMonad.Hooks.ManageDocks
 import           XMonad.Hooks.ManageHelpers
 import           XMonad.Hooks.SetWMName
 --import           XMonad.Layout.LayoutModifier (ModifiedLayout)
-import           XMonad.Layout.Fullscreen
+import           XMonad.Layout.Fullscreen    hiding (fullscreenEventHook)
 import           XMonad.Layout.NoBorders
 import           XMonad.Layout.ResizableTile
 import qualified XMonad.StackSet             as W

@@ -23,7 +23,7 @@ import           XMonad.Hooks.ManageDocks
 import           XMonad.Hooks.ManageHelpers
 import           XMonad.Hooks.SetWMName
 --import           XMonad.Layout.LayoutModifier (ModifiedLayout)
-import           XMonad.Layout.Fullscreen    hiding (fullscreenEventHook)
+import qualified XMonad.Layout.Fullscreen    as F
 import           XMonad.Layout.NoBorders
 import           XMonad.Layout.ResizableTile
 import qualified XMonad.StackSet             as W
@@ -249,11 +249,12 @@ myStartupHook = do
 
 -- | The 'ManageHook' for my XMonad configuration
 myManageHook :: ManageHook
-myManageHook = composeAll [ strutsMH
+myManageHook = composeAll [ dialogMH
+                          , strutsMH
                           , fullscreenMH
-                          , specialMH
-                          ]
+                          , specialMH ]
   where
+    dialogMH     = isDialog --> doCenterFloat   -- Float dialog boxes
     strutsMH     = manageDocks                  -- Avoid struts (e.g.: a panel)
     fullscreenMH = isFullscreen --> doFullFloat -- Fixes fullscreen windows
     specialMH    = composeAll $ map (uncurry applyProp) specialWindows

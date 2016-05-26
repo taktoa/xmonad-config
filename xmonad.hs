@@ -292,6 +292,7 @@ specialWindows =
   , (QClassName "Xfce4-notifyd-config",                  doCenterFloat)
   , (QClassName "Xfce4-session-settings",                doCenterFloat)
   , (QClassName "Xfce4-taskmanager",                     doCenterFloat)
+  , (QClassName "Xfce4-panel",                           doCenterFloat)
   , (QClassName "Xfce4-settings-manager",                doCenterFloat)
   , (QClassName "Zenity",                                doCenterFloat)
   , (QClassName "Wrapper-1.0",                           doFloat)
@@ -300,6 +301,7 @@ specialWindows =
   , (QAppName   "IcedTea-Web Control Panel",             doFloat)
   , (QAppName   "Java Control Panel",                    doFloat)
   , (QAppName   "Policy Tool",                           doFloat)
+  , (QArbitrary "WM_ICON_NAME" "lstopo",                 doCenterFloat)
   ]
 
 

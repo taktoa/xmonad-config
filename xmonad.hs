@@ -32,8 +32,7 @@ import           XMonad.Util.EZConfig
 
 import           Control.Concurrent          (forkIO, threadDelay)
 import           Control.Monad
-import           System.IO
-                 (IOMode (..), hFlush, hPutStrLn, stdout, withFile)
+import           System.IO                   (hFlush, stdout)
 
 --------------------------------------------------------------------------------
 ----------------------------------- Commands -----------------------------------
@@ -247,30 +246,6 @@ myStartupHook = do
   return ()
   checkKeymap def (myKeymap undefined)
   return ()
-
-  withDisplay $ \disp -> do
-    withWindowSet $ \wset -> do
-      let ws = W.allWindows wset
-      let runQ name win = show <$> getStringProperty disp win name
-      let getTitle = runQuery title
-      let getApp   = runQuery appName
-      let getClass = runQuery className
-
-      toPrint <- forM ws $ \win -> do
-        winTitle <- getTitle win
-        winApp   <- getApp   win
-        winClass <- getClass win
-        pure (winTitle, winApp, winClass)
-
-      io $ withFile "/home/remy/xmonad.log" AppendMode $ \hdl -> do
-        hPutStrLn hdl "STARTING STARTING STARTING STARTING STARTING STARTING"
-        hPutStrLn hdl "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
-        forM_ toPrint $ \(winTitle, winApp, winClass) -> do
-          hPutStrLn hdl winTitle
-          hPutStrLn hdl winApp
-          hPutStrLn hdl winClass
-
-      return ()
 
 -- | The 'ManageHook' for my XMonad configuration
 myManageHook :: ManageHook

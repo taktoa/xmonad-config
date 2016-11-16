@@ -31,8 +31,9 @@ import           XMonad.Util.Cursor
 import           XMonad.Util.EZConfig
 
 import           Control.Concurrent          (forkIO, threadDelay)
-import           Control.Monad               (void)
-import           System.IO                   (hFlush, stdout)
+import           Control.Monad
+import           System.IO
+                 (IOMode (..), hFlush, hPutStrLn, stdout, withFile)
 
 --------------------------------------------------------------------------------
 ----------------------------------- Commands -----------------------------------
@@ -247,6 +248,30 @@ myStartupHook = do
   checkKeymap def (myKeymap undefined)
   return ()
 
+  withDisplay $ \disp -> do
+    withWindowSet $ \wset -> do
+      let ws = W.allWindows wset
+      let runQ name win = show <$> getStringProperty disp win name
+      let getTitle = runQuery title
+      let getApp   = runQuery appName
+      let getClass = runQuery className
+
+      toPrint <- forM ws $ \win -> do
+        winTitle <- getTitle win
+        winApp   <- getApp   win
+        winClass <- getClass win
+        pure (winTitle, winApp, winClass)
+
+      io $ withFile "/home/remy/xmonad.log" AppendMode $ \hdl -> do
+        hPutStrLn hdl "STARTING STARTING STARTING STARTING STARTING STARTING"
+        hPutStrLn hdl "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+        forM_ toPrint $ \(winTitle, winApp, winClass) -> do
+          hPutStrLn hdl winTitle
+          hPutStrLn hdl winApp
+          hPutStrLn hdl winClass
+
+      return ()
+
 -- | The 'ManageHook' for my XMonad configuration
 myManageHook :: ManageHook
 myManageHook = composeAll [ dialogMH
@@ -257,44 +282,52 @@ myManageHook = composeAll [ dialogMH
     dialogMH     = isDialog --> doCenterFloat   -- Float dialog boxes
     strutsMH     = manageDocks                  -- Avoid struts (e.g.: a panel)
     fullscreenMH = isFullscreen --> doFullFloat -- Fixes fullscreen windows
-    specialMH    = composeAll $ map (uncurry applyProp) specialWindows
+    specialMH    = composeAll $ map (uncurry (-->)) specialWindows
 
 -- | This is a list of programs where XMonad's default behavior is not ideal.
-specialWindows :: [(X11Query, ManageHook)]
+specialWindows :: [(Query Bool, ManageHook)]
 specialWindows =
-  [ (QClassName "7zFM",                                  doCenterFloat)
-  , (QClassName "Arandr",                                doCenterFloat)
-  , (QClassName "Avahi-discover",                        doCenterFloat)
-  , (QClassName "bssh",                                  doCenterFloat)
-  , (QClassName "bvnc",                                  doCenterFloat)
-  , (QClassName "File-roller",                           doCenterFloat)
-  , (QClassName "Gigolo",                                doCenterFloat)
-  , (QClassName "Ghb",                                   doCenterFloat)
-  , (QClassName "melt",                                  doCenterFloat)
-  , (QClassName ".nm-connection-editor-wrapped",         doCenterFloat)
-  , (QClassName "net-sf-openrocket-startup-Startup",     doCenterFloat)
-  , (QClassName "net-technicpack-launcher-LauncherMain", doCenterFloat)
-  , (QClassName "Ristretto",                             doCenterFloat)
-  , (QClassName "Unetbootin",                            doCenterFloat)
-  , (QClassName "Xfce4-about",                           doCenterFloat)
-  , (QClassName "Xfce4-accessibility-settings",          doCenterFloat)
-  , (QClassName "Xfce4-appearance-settings",             doCenterFloat)
-  , (QClassName "Xfce4-display-settings",                doCenterFloat)
-  , (QClassName "Xfce4-keyboard-settings",               doCenterFloat)
-  , (QClassName "Xfce4-mime-settings",                   doCenterFloat)
-  , (QClassName "Xfce4-mouse-settings",                  doCenterFloat)
-  , (QClassName "Xfce4-notifyd-config",                  doCenterFloat)
-  , (QClassName "Xfce4-session-settings",                doCenterFloat)
-  , (QClassName "Xfce4-taskmanager",                     doCenterFloat)
-  , (QClassName "Xfce4-settings-manager",                doCenterFloat)
-  , (QClassName "Zenity",                                doCenterFloat)
-  , (QClassName "Wrapper-1.0",                           doFloat)
-  , (QClassName "MPlayer",                               doFloat)
-  , (QClassName "Gimp",                                  doFloat)
-  , (QAppName   "IcedTea-Web Control Panel",             doFloat)
-  , (QAppName   "Java Control Panel",                    doFloat)
-  , (QAppName   "Policy Tool",                           doFloat)
+  [ (qClassN "7zFM",                                        doCenterFloat)
+  , (qClassN "Arandr",                                      doCenterFloat)
+  , (qClassN "Avahi-discover",                              doCenterFloat)
+  , (qClassN "bssh",                                        doCenterFloat)
+  , (qClassN "bvnc",                                        doCenterFloat)
+  , (qClassN "File-roller",                                 doCenterFloat)
+  , (qClassN "Gigolo",                                      doCenterFloat)
+  , (qClassN "Ghb",                                         doCenterFloat)
+  , (qClassN "melt",                                        doCenterFloat)
+  , (qClassN ".nm-connection-editor-wrapped",               doCenterFloat)
+  , (qClassN "net-sf-openrocket-startup-Startup",           doCenterFloat)
+  , (qClassN "net-technicpack-launcher-LauncherMain",       doCenterFloat)
+  -- , (qClassN "Ristretto",                                   doCenterFloat)
+  , (qClassN "Unetbootin",                                  doCenterFloat)
+  , (qClassN "Xfce4-about",                                 doCenterFloat)
+  , (qClassN "Xfce4-accessibility-settings",                doCenterFloat)
+  , (qClassN "Xfce4-appearance-settings",                   doCenterFloat)
+  , (qClassN "Xfce4-display-settings",                      doCenterFloat)
+  , (qClassN "Xfce4-keyboard-settings",                     doCenterFloat)
+  , (qClassN "Xfce4-mime-settings",                         doCenterFloat)
+  , (qClassN "Xfce4-mouse-settings",                        doCenterFloat)
+  , (qClassN "Xfce4-notifyd-config",                        doCenterFloat)
+  , (qClassN "Xfce4-session-settings",                      doCenterFloat)
+  , (qClassN "Xfce4-taskmanager",                           doCenterFloat)
+  , (qClassN "Xfce4-settings-manager",                      doCenterFloat)
+  , (qClassN "Zenity",                                      doCenterFloat)
+  , (qClassN "Wrapper-1.0",                                 doCenterFloat)
+  , (qClassN "MPlayer",                                     doFloat)
+  , (qClassN "Gimp",                                        doFloat)
+  , (qTitle  "Panel",                                       doCenterFloat)
+  , (qTitle  "Add New Items",                               doCenterFloat)
+  , (qAppN   "IcedTea-Web Control Panel",                   doFloat)
+  , (qAppN   "Java Control Panel",                          doFloat)
+  , (qAppN   "Policy Tool",                                 doFloat)
+  , (qClassN "Xfce4-panel",                                 doCenterFloat)
+  , (qClassN "QtSpimbot" <&&> qTitle "Map",                 doFloat)
   ]
+  where
+    qTitle  s = title     =? s
+    qAppN   s = appName   =? s
+    qClassN s = className =? s
 
 
 --------------------------------------------------------------------------------
@@ -332,31 +365,6 @@ specialWindows =
 --
 -- keyComboParser :: a
 -- keyComboParser = undefined
-
--- | An X11 query.
---   Find the data for creating an 'X11Query' with the @xprop@ command.
---   For example:
---      @WM_CLASS(STRING) = "Chromium"@ in your @xprop@ output
---   gives you
---      @FWClassName "Chromium"@ as an 'X11Query'
---
-data X11Query = QTitle     String        -- ^ The X11 window title
-              | QAppName   String        -- ^ The X11 application name
-              | QClassName String        -- ^ The X11 class name
-              | QArbitrary String String -- ^ An arbitrary X property
-              deriving (Eq, Show, Read)
-
--- | Declare that windows that match a given 'X11Query'
---   should execute the given 'ManageHook'.
-applyProp :: X11Query -> ManageHook -> Query (Endo WindowSet)
-applyProp q mh = queryX11 q --> mh
-
--- | Translate an 'X11Query' to the corresponding 'Query Bool'.
-queryX11 :: X11Query -> Query Bool
-queryX11 (QTitle       s) = title            =? s
-queryX11 (QAppName     s) = appName          =? s
-queryX11 (QClassName   s) = className        =? s
-queryX11 (QArbitrary p s) = stringProperty p =? s
 
 
 --------------------------------------------------------------------------------

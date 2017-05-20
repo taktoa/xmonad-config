@@ -40,7 +40,9 @@ import           System.IO                   (hFlush, stdout)
 
 -- | Launch XMonad
 main :: IO ()
-main = fixPanel >> xmonad myConfig
+main = do
+  fixPanel
+  xmonad myConfig
 
 fixPanel :: IO ()
 fixPanel = void $ forkIO $ do
@@ -52,22 +54,23 @@ fixPanel = void $ forkIO $ do
   spawn "xfce4-panel -r"
   putStrLn "[DONE]"
 
-myConfig = ewmh $ def { borderWidth        = 1
-                      , normalBorderColor  = "gray"
-                      , focusedBorderColor = "red"
-                      , terminal           = "xfce4-terminal"
-                      , focusFollowsMouse  = True
-                      , clickJustFocuses   = True
-                      , modMask            = mod4Mask
-                      , keys               = myKeys
-                      , mouseBindings      = myMouse
-                      , workspaces         = myWorkspaces
-                      , layoutHook         = myLayout
-                      , logHook            = myLogHook
-                      , startupHook        = myStartupHook
-                      , handleEventHook    = myHandleEventHook
-                      , manageHook         = myManageHook
-                      }
+myConfig = docks $ ewmh
+            $ def { borderWidth        = 1
+                  , normalBorderColor  = "gray"
+                  , focusedBorderColor = "red"
+                  , terminal           = "xfce4-terminal"
+                  , focusFollowsMouse  = True
+                  , clickJustFocuses   = True
+                  , modMask            = mod4Mask
+                  , keys               = myKeys
+                  , mouseBindings      = myMouse
+                  , workspaces         = myWorkspaces
+                  , layoutHook         = myLayout
+                  , logHook            = myLogHook
+                  , startupHook        = myStartupHook
+                  , handleEventHook    = myHandleEventHook
+                  , manageHook         = myManageHook
+                  }
 
 -- | Separated from myKeymap so we can do a validity check at startup
 myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
@@ -116,19 +119,21 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("M4-S-6",          moveToWS 6)
                , ("M4-S-7",          moveToWS 7)
                , ("M4-S-8",          moveToWS 8)
-               , ("M4-w",            viewMonitor 1)
-               , ("M4-e",            viewMonitor 2)
-               , ("M4-r",            viewMonitor 3)
-               , ("M4-S-w",          moveToMonitor 1)
-               , ("M4-S-e",          moveToMonitor 2)
-               , ("M4-S-r",          moveToMonitor 3)
+               -- , ("M4-w",            viewMonitor 1)
+               -- , ("M4-e",            viewMonitor 2)
+               -- , ("M4-r",            viewMonitor 3)
+               -- , ("M4-S-w",          moveToMonitor 1)
+               -- , ("M4-S-e",          moveToMonitor 2)
+               -- , ("M4-S-r",          moveToMonitor 3)
                , ("M1-M4-b",         toggleStruts)
                , ("M4-c",            chromiumCmd)
                , ("M4-M1-c",         chromiumCmd)
                , ("M1-M4-k",         conkerorCmd)
                , ("M1-M4-t",         teamspeakCmd)
-               , ("M4-z",            dmenuCmd)
-               , ("M1-M4-z",         dmenuCmd)
+               , ("M4-z",            rofiRunCmd)
+               , ("M1-M4-z",         rofiRunCmd)
+               , ("M4-w",            rofiWindowCmd)
+               , ("M1-M4-w",         rofiWindowCmd)
                , ("M4-m",            mocCmd)
                , ("M1-M4-m",         mocCmd)
                , ("M1-M4-e",         emacsCmd)
@@ -171,11 +176,13 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
     chromiumCmd     = spawn "chromium"
     conkerorCmd     = spawn "conkeror"
     teamspeakCmd    = spawn "ts3client"
-    dmenuCmd        = spawn "yeganesh -x | bash"
+    -- dmenuCmd        = spawn "yeganesh -x | bash"
     emacsCmd        = spawn "emacs"
     mocCmd          = spawn "xfce4-terminal -x mocp"
     mocPlayPauseCmd = spawn "mocp -G"
     pavucontrolCmd  = spawn "pavucontrol"
+    rofiRunCmd      = spawn "rofi -show run"
+    rofiWindowCmd   = spawn "rofi -show window"
     -- xfceRunCmd      = spawn "xfrun4"
     -- xfceAppMenuCmd  = spawn "xfce4-appfinder"
     -- logoutCmd       = spawn "xfce4-session-logout"
@@ -262,42 +269,46 @@ myManageHook = composeAll [ dialogMH
 -- | This is a list of programs where XMonad's default behavior is not ideal.
 specialWindows :: [(Query Bool, ManageHook)]
 specialWindows =
-  [ (qClassN "7zFM",                                        doCenterFloat)
-  , (qClassN "Arandr",                                      doCenterFloat)
-  , (qClassN "Avahi-discover",                              doCenterFloat)
-  , (qClassN "bssh",                                        doCenterFloat)
-  , (qClassN "bvnc",                                        doCenterFloat)
-  , (qClassN "File-roller",                                 doCenterFloat)
-  , (qClassN "Gigolo",                                      doCenterFloat)
-  , (qClassN "Ghb",                                         doCenterFloat)
-  , (qClassN "melt",                                        doCenterFloat)
-  , (qClassN ".nm-connection-editor-wrapped",               doCenterFloat)
-  , (qClassN "net-sf-openrocket-startup-Startup",           doCenterFloat)
-  , (qClassN "net-technicpack-launcher-LauncherMain",       doCenterFloat)
-  -- , (qClassN "Ristretto",                                   doCenterFloat)
-  , (qClassN "Unetbootin",                                  doCenterFloat)
-  , (qClassN "Xfce4-about",                                 doCenterFloat)
-  , (qClassN "Xfce4-accessibility-settings",                doCenterFloat)
-  , (qClassN "Xfce4-appearance-settings",                   doCenterFloat)
-  , (qClassN "Xfce4-display-settings",                      doCenterFloat)
-  , (qClassN "Xfce4-keyboard-settings",                     doCenterFloat)
-  , (qClassN "Xfce4-mime-settings",                         doCenterFloat)
-  , (qClassN "Xfce4-mouse-settings",                        doCenterFloat)
-  , (qClassN "Xfce4-notifyd-config",                        doCenterFloat)
-  , (qClassN "Xfce4-session-settings",                      doCenterFloat)
-  , (qClassN "Xfce4-taskmanager",                           doCenterFloat)
-  , (qClassN "Xfce4-settings-manager",                      doCenterFloat)
-  , (qClassN "Zenity",                                      doCenterFloat)
-  , (qClassN "Wrapper-1.0",                                 doCenterFloat)
-  , (qClassN "MPlayer",                                     doFloat)
-  , (qClassN "Gimp",                                        doFloat)
-  , (qTitle  "Panel",                                       doCenterFloat)
-  , (qTitle  "Add New Items",                               doCenterFloat)
-  , (qAppN   "IcedTea-Web Control Panel",                   doFloat)
-  , (qAppN   "Java Control Panel",                          doFloat)
-  , (qAppN   "Policy Tool",                                 doFloat)
-  , (qClassN "Xfce4-panel",                                 doCenterFloat)
-  , (qClassN "QtSpimbot" <&&> qTitle "Map",                 doFloat)
+  [ (qClassN "7zFM",                                          doCenterFloat)
+  , (qClassN "Arandr",                                        doCenterFloat)
+  , (qClassN "Avahi-discover",                                doCenterFloat)
+  , (qClassN "bssh",                                          doCenterFloat)
+  , (qClassN "bvnc",                                          doCenterFloat)
+  , (qClassN "File-roller",                                   doCenterFloat)
+  , (qClassN "Gigolo",                                        doCenterFloat)
+  , (qClassN "Ghb",                                           doCenterFloat)
+  , (qClassN "melt",                                          doCenterFloat)
+  , (qClassN ".nm-connection-editor-wrapped",                 doCenterFloat)
+  , (qClassN "net-sf-openrocket-startup-Startup",             doCenterFloat)
+  , (qClassN "net-technicpack-launcher-LauncherMain",         doCenterFloat)
+  , (qClassN "sun-awt-X11-XFramePeer",                        doCenterFloat)
+  , (qClassN "com-intellij-rt-execution-application-AppMain", doCenterFloat)
+  -- , (qClassN "Ristretto",                                     doCenterFloat)
+  , (qClassN "Unetbootin",                                    doCenterFloat)
+  , (qClassN "Bustle",                                        doCenterFloat)
+  , (qClassN "Xfce4-about",                                   doCenterFloat)
+  , (qClassN "Xfce4-accessibility-settings",                  doCenterFloat)
+  , (qClassN "Xfce4-appearance-settings",                     doCenterFloat)
+  , (qClassN "Xfce4-display-settings",                        doCenterFloat)
+  , (qClassN "Xfce4-keyboard-settings",                       doCenterFloat)
+  , (qClassN "Xfce4-mime-settings",                           doCenterFloat)
+  , (qClassN "Xfce4-mouse-settings",                          doCenterFloat)
+  , (qClassN "Xfce4-notifyd-config",                          doCenterFloat)
+  , (qClassN "Xfce4-session-settings",                        doCenterFloat)
+  , (qClassN "Xfce4-taskmanager",                             doCenterFloat)
+  , (qClassN "Xfce4-settings-manager",                        doCenterFloat)
+  , (qClassN "Zenity",                                        doCenterFloat)
+  , (qClassN "Wrapper-1.0",                                   doCenterFloat)
+  , (qClassN "Gnuplot",                                       doCenterFloat)
+  , (qClassN "MPlayer",                                       doFloat)
+  , (qClassN "Gimp",                                          doFloat)
+  , (qTitle  "Panel",                                         doCenterFloat)
+  , (qTitle  "Add New Items",                                 doCenterFloat)
+  , (qAppN   "IcedTea-Web Control Panel",                     doFloat)
+  , (qAppN   "Java Control Panel",                            doFloat)
+  , (qAppN   "Policy Tool",                                   doFloat)
+  , (qClassN "Xfce4-panel",                                   doCenterFloat)
+  , (qClassN "QtSpimbot" <&&> qTitle "Map",                   doFloat)
   ]
   where
     qTitle  s = title     =? s

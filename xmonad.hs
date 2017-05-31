@@ -32,6 +32,7 @@ import           XMonad.Util.EZConfig
 
 import           Control.Concurrent          (forkIO, threadDelay)
 import           Control.Monad
+import           System.Exit
 import           System.IO                   (hFlush, stdout)
 
 --------------------------------------------------------------------------------
@@ -41,18 +42,29 @@ import           System.IO                   (hFlush, stdout)
 -- | Launch XMonad
 main :: IO ()
 main = do
-  fixPanel
+  -- fixPanel
+  -- startKDE
   xmonad myConfig
 
-fixPanel :: IO ()
-fixPanel = void $ forkIO $ do
+startKDE :: IO ()
+startKDE = void $ forkIO $ do
   putStrLn "Delay starting"
-  threadDelay 5000000
+  threadDelay 2000000
   putStrLn "Delay done"
-  putStr "Restarting xfce4-panel ... "
+  putStr "Starting plasmashell ... "
   hFlush stdout
-  spawn "xfce4-panel -r"
+  spawn "plasmashell"
   putStrLn "[DONE]"
+
+-- fixPanel :: IO ()
+-- fixPanel = void $ forkIO $ do
+--   putStrLn "Delay starting"
+--   threadDelay 5000000
+--   putStrLn "Delay done"
+--   putStr "Restarting xfce4-panel ... "
+--   hFlush stdout
+--   spawn "xfce4-panel -r"
+--   putStrLn "[DONE]"
 
 myConfig = docks $ ewmh
             $ def { borderWidth        = 1
@@ -141,6 +153,7 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("<XF86AudioPlay>", mocPlayPauseCmd)
                , ("M4--",            shrinkTile)
                , ("M4-=",            expandTile)
+               , ("M4-S-l",          lockScreen)
                ]
   where
     startTerminal   = spawn $ XMonad.terminal cfg
@@ -158,7 +171,8 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
     retileWindow    = withFocused $ windows . W.sink
     incrementMaster = sendMessage $ IncMasterN 1
     decrementMaster = sendMessage $ IncMasterN (-1)
-    logoutCmd       = spawn "xfce4-session-logout"
+    -- logoutCmd       = spawn "dbus-send --print-reply --dest=org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout int32:1 int32:0 int32:1"
+    logoutCmd       = io (exitWith ExitSuccess)
     restartXMonad   =
       spawn $ unwords [ "if type xmonad; then"
                       , "xmonad --recompile && xmonad --restart;"
@@ -176,18 +190,15 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
     chromiumCmd     = spawn "chromium"
     conkerorCmd     = spawn "conkeror"
     teamspeakCmd    = spawn "ts3client"
-    -- dmenuCmd        = spawn "yeganesh -x | bash"
     emacsCmd        = spawn "emacs"
-    mocCmd          = spawn "xfce4-terminal -x mocp"
+    mocCmd          = spawn "konsole -e mocp"
     mocPlayPauseCmd = spawn "mocp -G"
     pavucontrolCmd  = spawn "pavucontrol"
     rofiRunCmd      = spawn "rofi -show run"
     rofiWindowCmd   = spawn "rofi -show window"
-    -- xfceRunCmd      = spawn "xfrun4"
-    -- xfceAppMenuCmd  = spawn "xfce4-appfinder"
-    -- logoutCmd       = spawn "xfce4-session-logout"
     shrinkTile      = sendMessage MirrorShrink
     expandTile      = sendMessage MirrorExpand
+    lockScreen      = spawn "sleep 0.5; qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock; sleep 0.5"
 
 -- | Mouse bindings
 --   buttons: 1 = left, 2 = middle, 3 = right, 4 = scroll down, 5 = scroll up
@@ -309,6 +320,8 @@ specialWindows =
   , (qAppN   "Policy Tool",                                   doFloat)
   , (qClassN "Xfce4-panel",                                   doCenterFloat)
   , (qClassN "QtSpimbot" <&&> qTitle "Map",                   doFloat)
+  -- , (qClassN "Plasma-desktop",                                doFloat)
+  , (qClassN "plasmashell",                                   doFloat)
   ]
   where
     qTitle  s = title     =? s

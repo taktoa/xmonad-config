@@ -146,6 +146,7 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("M1-M4-z",         rofiRunCmd)
                , ("M4-w",            rofiWindowCmd)
                , ("M1-M4-w",         rofiWindowCmd)
+               , ("M4-p",            rofiPassCmd)
                , ("M4-m",            mocCmd)
                , ("M1-M4-m",         mocCmd)
                , ("M1-M4-e",         emacsCmd)
@@ -196,6 +197,7 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
     pavucontrolCmd  = spawn "pavucontrol"
     rofiRunCmd      = spawn "rofi -show run"
     rofiWindowCmd   = spawn "rofi -show window"
+    rofiPassCmd     = spawn "rofi-pass"
     shrinkTile      = sendMessage MirrorShrink
     expandTile      = sendMessage MirrorExpand
     lockScreen      = spawn "sleep 0.5; qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock; sleep 0.5"

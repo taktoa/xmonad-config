@@ -119,12 +119,12 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("M4-S-6",          moveToWS 6)
                , ("M4-S-7",          moveToWS 7)
                , ("M4-S-8",          moveToWS 8)
-               -- , ("M4-w",            viewMonitor 1)
-               -- , ("M4-e",            viewMonitor 2)
-               -- , ("M4-r",            viewMonitor 3)
-               -- , ("M4-S-w",          moveToMonitor 1)
-               -- , ("M4-S-e",          moveToMonitor 2)
-               -- , ("M4-S-r",          moveToMonitor 3)
+               -- , ("M4-w",            viewMonitor 0)
+               -- , ("M4-e",            viewMonitor 1)
+               -- , ("M4-r",            viewMonitor 2)
+               -- , ("M4-S-w",          moveToMonitor 0)
+               -- , ("M4-S-e",          moveToMonitor 1)
+               -- , ("M4-S-r",          moveToMonitor 2)
                , ("M1-M4-b",         toggleStruts)
                , ("M4-c",            chromiumCmd)
                , ("M4-M1-c",         chromiumCmd)
@@ -225,7 +225,7 @@ myWorkspaces = [ "1"
 -- | My window layouts
 myLayout = modifyL unmodified
   where
-    unmodified = tiled ||| Mirror tiled ||| Full
+    unmodified = tiled ||| Full -- Mirror tiled ||| Full
     -- default tiling algorithm partitions the screen into two panes
     tiled   = ResizableTall nmaster delta ratio []
     -- The default number of windows in the master pane
@@ -297,6 +297,7 @@ specialWindows =
   , (qClassN "Xfce4-session-settings",                        doCenterFloat)
   , (qClassN "Xfce4-taskmanager",                             doCenterFloat)
   , (qClassN "Xfce4-settings-manager",                        doCenterFloat)
+  , (qClassN "Xfce4-notifyd",                                 doIgnore)
   , (qClassN "Zenity",                                        doCenterFloat)
   , (qClassN "Wrapper-1.0",                                   doCenterFloat)
   , (qClassN "Gnuplot",                                       doCenterFloat)

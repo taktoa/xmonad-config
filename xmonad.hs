@@ -134,6 +134,7 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("M1-M4-z",         rofiRunCmd)
                , ("M4-w",            rofiWindowCmd)
                , ("M1-M4-w",         rofiWindowCmd)
+               , ("M4-p",            rofiPassCmd)
                , ("M4-m",            mocCmd)
                , ("M1-M4-m",         mocCmd)
                , ("M1-M4-e",         emacsCmd)
@@ -141,6 +142,9 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("<XF86AudioPlay>", mocPlayPauseCmd)
                , ("M4--",            shrinkTile)
                , ("M4-=",            expandTile)
+               , ("M4-M1-1",         spawn "/home/remy/.screenlayout/laptop.sh")
+               , ("M4-M1-2",         spawn "/home/remy/.screenlayout/dfinity.sh")
+               , ("M4-M1-3",         spawn "/home/remy/.screenlayout/tv.sh")
                ]
   where
     startTerminal   = spawn $ XMonad.terminal cfg
@@ -183,6 +187,7 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
     pavucontrolCmd  = spawn "pavucontrol"
     rofiRunCmd      = spawn "rofi -show run"
     rofiWindowCmd   = spawn "rofi -show window"
+    rofiPassCmd     = spawn "rofi-pass"
     -- xfceRunCmd      = spawn "xfrun4"
     -- xfceAppMenuCmd  = spawn "xfce4-appfinder"
     -- logoutCmd       = spawn "xfce4-session-logout"
@@ -310,6 +315,7 @@ specialWindows =
   , (qAppN   "Policy Tool",                                   doFloat)
   , (qClassN "Xfce4-panel",                                   doCenterFloat)
   , (qClassN "QtSpimbot" <&&> qTitle "Map",                   doFloat)
+  , (qClassN "Pinentry",                                      doCenterFloat)
   ]
   where
     qTitle  s = title     =? s

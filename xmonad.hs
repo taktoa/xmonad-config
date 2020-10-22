@@ -1,4 +1,3 @@
-{-# LANGUAGE AutoDeriveTypeable    #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -6,24 +5,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 
---import           Data.Attoparsec
---import           Data.Data
 import qualified Data.Map                    as M
 import           Data.Monoid
---import           Language.Haskell.TH
---import           Language.Haskell.TH          (Exp (..), Pat (..), Q)
---import qualified Language.Haskell.TH          as TH
---import           Language.Haskell.TH.Quote
---import           System.Exit
 import           XMonad
 import           XMonad.Actions.FloatSnap
---import qualified XMonad.Core                  as XMonad
 import           XMonad.Hooks.EwmhDesktops
 import           XMonad.Hooks.ManageDocks
 import           XMonad.Hooks.ManageHelpers
 import           XMonad.Hooks.SetWMName
---import           XMonad.Layout.LayoutModifier (ModifiedLayout)
-import qualified XMonad.Layout.Fullscreen    as F
 import           XMonad.Layout.NoBorders
 import           XMonad.Layout.ResizableTile
 import qualified XMonad.StackSet             as W
@@ -34,25 +23,8 @@ import           Control.Concurrent          (forkIO, threadDelay)
 import           Control.Monad
 import           System.IO                   (hFlush, stdout)
 
---------------------------------------------------------------------------------
------------------------------------ Commands -----------------------------------
---------------------------------------------------------------------------------
-
--- | Launch XMonad
 main :: IO ()
-main = do
-  fixPanel
-  xmonad myConfig
-
-fixPanel :: IO ()
-fixPanel = void $ forkIO $ do
-  putStrLn "Delay starting"
-  threadDelay 5000000
-  putStrLn "Delay done"
-  putStr "Restarting xfce4-panel ... "
-  hFlush stdout
-  spawn "xfce4-panel -r"
-  putStrLn "[DONE]"
+main = xmonad myConfig
 
 myConfig = docks $ ewmh
             $ def { borderWidth        = 1
@@ -102,7 +74,6 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("M4-,",            incrementMaster)
                , ("M4-.",            decrementMaster)
                , ("M4-q",            restartXMonad)
-               , ("M4-S-q",          logoutCmd)
                , ("M4-1",            viewWS 1)
                , ("M4-2",            viewWS 2)
                , ("M4-3",            viewWS 3)
@@ -119,33 +90,13 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("M4-S-6",          moveToWS 6)
                , ("M4-S-7",          moveToWS 7)
                , ("M4-S-8",          moveToWS 8)
-               -- , ("M4-w",            viewMonitor 0)
-               -- , ("M4-e",            viewMonitor 1)
-               -- , ("M4-r",            viewMonitor 2)
-               -- , ("M4-S-w",          moveToMonitor 0)
-               -- , ("M4-S-e",          moveToMonitor 1)
-               -- , ("M4-S-r",          moveToMonitor 2)
                , ("M1-M4-b",         toggleStruts)
-               , ("M4-c",            chromiumCmd)
-               , ("M4-M1-c",         chromiumCmd)
-               , ("M1-M4-k",         conkerorCmd)
-               , ("M1-M4-t",         teamspeakCmd)
                , ("M4-z",            rofiRunCmd)
                , ("M1-M4-z",         rofiRunCmd)
                , ("M4-w",            rofiWindowCmd)
                , ("M1-M4-w",         rofiWindowCmd)
-               , ("M4-p",            rofiPassCmd)
-               , ("M4-m",            mocCmd)
-               , ("M1-M4-m",         mocCmd)
-               , ("M1-M4-e",         emacsCmd)
-               , ("M1-M4-p",         pavucontrolCmd)
-               , ("<XF86AudioPlay>", mocPlayPauseCmd)
                , ("M4--",            shrinkTile)
                , ("M4-=",            expandTile)
-               , ("M4-M1-r",         spawn "/home/remy/.screenlayout/reset.sh && /home/remy/.screenlayout/laptop.sh")
-               , ("M4-M1-1",         spawn "/home/remy/.screenlayout/laptop.sh")
-               , ("M4-M1-2",         spawn "/home/remy/.screenlayout/dfinity.sh")
-               , ("M4-M1-3",         spawn "/home/remy/.screenlayout/tv.sh")
                ]
   where
     startTerminal   = spawn $ XMonad.terminal cfg
@@ -154,7 +105,6 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
     resetLayout     = setLayout $ XMonad.layoutHook cfg
     focusDown       = windows W.focusDown
     focusUp         = windows W.focusUp
-    focusMaster     = windows W.focusMaster
     swapMaster      = windows W.swapMaster
     swapDown        = windows W.swapDown
     swapUp          = windows W.swapUp
@@ -163,7 +113,6 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
     retileWindow    = withFocused $ windows . W.sink
     incrementMaster = sendMessage $ IncMasterN 1
     decrementMaster = sendMessage $ IncMasterN (-1)
-    logoutCmd       = spawn "xfce4-session-logout"
     restartXMonad   =
       spawn $ unwords [ "if type xmonad; then"
                       , "xmonad --recompile && xmonad --restart;"
@@ -172,32 +121,16 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                       , "fi"
                       ]
     doWorkspace f i = windows $ f $ XMonad.workspaces cfg !! (i - 1)
-    doMonitor f i   = screenWorkspace i >>= flip whenJust (windows . f)
     viewWS          = doWorkspace W.greedyView
     moveToWS        = doWorkspace W.shift
-    viewMonitor     = doMonitor W.view
-    moveToMonitor   = doMonitor W.shift
     toggleStruts    = sendMessage ToggleStruts
-    chromiumCmd     = spawn "chromium"
-    conkerorCmd     = spawn "conkeror"
-    teamspeakCmd    = spawn "ts3client"
-    -- dmenuCmd        = spawn "yeganesh -x | bash"
-    emacsCmd        = spawn "emacs"
-    mocCmd          = spawn "xfce4-terminal -x mocp"
-    mocPlayPauseCmd = spawn "mocp -G"
-    pavucontrolCmd  = spawn "pavucontrol"
     rofiRunCmd      = spawn "rofi -show run"
     rofiWindowCmd   = spawn "rofi -show window"
-    rofiPassCmd     = spawn "rofi-pass"
-    -- xfceRunCmd      = spawn "xfrun4"
-    -- xfceAppMenuCmd  = spawn "xfce4-appfinder"
-    -- logoutCmd       = spawn "xfce4-session-logout"
     shrinkTile      = sendMessage MirrorShrink
     expandTile      = sendMessage MirrorExpand
 
 -- | Mouse bindings
 --   buttons: 1 = left, 2 = middle, 3 = right, 4 = scroll down, 5 = scroll up
---myMouse :: MonadIO m => [((KeyMask, Button), m ())]
 myMouse :: t -> M.Map (KeyMask, Button) (Window -> X ())
 myMouse _ =  M.fromList [ ((mod4Mask, button1), floatMove)
                         , ((mod4Mask, button3), resizeMove)
@@ -226,8 +159,6 @@ myWorkspaces = [ "1"
                , "8"
                ]
 
--- FIXME: https://www.reddit.com/r/xmonad/comments/3vkrc3/does_this_layout_exist_if_not_can_anyone_suggest/
-
 -- | My window layouts
 myLayout = modifyL unmodified
   where
@@ -255,10 +186,8 @@ myHandleEventHook = fullscreenEventHook
 myStartupHook :: X ()
 myStartupHook = do
   setWMName "LG3D"
-  setDefaultCursor xC_left_ptr
-  return ()
-  checkKeymap def (myKeymap undefined)
-  return ()
+  void $ setDefaultCursor xC_left_ptr
+  void $ checkKeymap def (myKeymap undefined)
 
 -- | The 'ManageHook' for my XMonad configuration
 myManageHook :: ManageHook
@@ -273,6 +202,9 @@ myManageHook = composeAll [ dialogMH
     specialMH    = composeAll $ map (uncurry (-->)) specialWindows
 
 -- | This is a list of programs where XMonad's default behavior is not ideal.
+--
+-- To find the "class" or "name", use the @xprop@ command and click on the
+-- problematic window.
 specialWindows :: [(Query Bool, ManageHook)]
 specialWindows =
   [ (qClassN "7zFM",                                          doCenterFloat)
@@ -286,10 +218,8 @@ specialWindows =
   , (qClassN "melt",                                          doCenterFloat)
   , (qClassN ".nm-connection-editor-wrapped",                 doCenterFloat)
   , (qClassN "net-sf-openrocket-startup-Startup",             doCenterFloat)
-  , (qClassN "net-technicpack-launcher-LauncherMain",         doCenterFloat)
   , (qClassN "sun-awt-X11-XFramePeer",                        doCenterFloat)
   , (qClassN "com-intellij-rt-execution-application-AppMain", doCenterFloat)
-  -- , (qClassN "Ristretto",                                     doCenterFloat)
   , (qClassN "Unetbootin",                                    doCenterFloat)
   , (qClassN "Bustle",                                        doCenterFloat)
   , (qClassN "Xfce4-about",                                   doCenterFloat)
@@ -323,242 +253,3 @@ specialWindows =
     qTitle  s = title     =? s
     qAppN   s = appName   =? s
     qClassN s = className =? s
-
-
---------------------------------------------------------------------------------
------------------------------------ Utility ------------------------------------
---------------------------------------------------------------------------------
-
--- type Quasi a = (Data a, Typeable a)
---
--- -- | Quasiquoter for keyboard combinations
--- keysQ :: QuasiQuoter
--- keysQ = QuasiQuoter { quoteExp = qqKeysE, quotePat = qqKeysP }
---
--- qqKeysE :: String -> Q Exp
--- qqKeysE s = getPosition >>= keyParse s >>= dataToExpQ (const Nothing)
---
--- qqKeysP :: String -> Q Pat
--- qqKeysP s = getPosition >>= keyParse s >>= dataToPatQ defaultQP
---
--- defaultQP :: Quasi a => a -> Maybe (Q Pat)
--- defaultQP = const Nothing
---
--- getPosition = fmap transPos location where
---   transPos loc = (loc_filename loc,
---                   fst (loc_start loc),
---                   snd (loc_start loc))
---
--- keyParse :: Quasi a => String -> (String, Int, Int) -> Q [(String, a)]
--- keyParse str pos = undefined
---
--- data KeyMask = KMShift
---              | KMAlt
---              | KMCtrl
---              | KMSuper
---              deriving (Eq, Ord, Enum, Read, Show, Data)
---
--- keyComboParser :: a
--- keyComboParser = undefined
-
-
---------------------------------------------------------------------------------
--------------------------------- Documentation ---------------------------------
---------------------------------------------------------------------------------
-
-
--- Key masks
-
--- Find the values of M1 through M4 with xmodmap -pm
---   shift    Shift_L (0x32), Shift_R (0x3e)
---   lock
---   control  Control_L (0x25), Control_L (0x42), Control_R (0x69)
---   mod1     Alt_L (0x40), Alt_R (0x6c), Meta_L (0xcd)
---   mod2     Num_Lock (0x4d)
---   mod3
---   mod4     Super_L (0x85), Super_R (0x86), Super_L (0xce), Hyper_L (0xcf)
---   mod5     ISO_Level3_Shift (0x5c), Mode_switch (0xcb)
-
--- Key symbols
-
--- <Backspace>
--- <Tab>
--- <Return>
--- <Pause>
--- <Scroll_lock>
--- <Sys_Req>
--- <Print>
--- <Escape>, <Esc>
--- <Delete>
--- <Home>
--- <Left>, <L>
--- <Up>, <U>
--- <Right>, <R>
--- <Down>, <D>
--- <Page_Up>
--- <Page_Down>
--- <End>
--- <Insert>
--- <Break>
--- <Space>
--- <F1>-<F24>
--- <KP_Space>
--- <KP_Tab>
--- <KP_Enter>
--- <KP_F1>
--- <KP_F2>
--- <KP_F3>
--- <KP_F4>
--- <KP_Home>
--- <KP_Left>
--- <KP_Up>
--- <KP_Right>
--- <KP_Down>
--- <KP_Prior>
--- <KP_Page_Up>
--- <KP_Next>
--- <KP_Page_Down>
--- <KP_End>
--- <KP_Begin>
--- <KP_Insert>
--- <KP_Delete>
--- <KP_Equal>
--- <KP_Multiply>
--- <KP_Add>
--- <KP_Separator>
--- <KP_Subtract>
--- <KP_Decimal>
--- <KP_Divide>
--- <KP_0>-<KP_9>
--- <XF86ModeLock>
--- <XF86MonBrightnessUp>
--- <XF86MonBrightnessDown>
--- <XF86KbdLightOnOff>
--- <XF86KbdBrightnessUp>
--- <XF86KbdBrightnessDown>
--- <XF86Standby>
--- <XF86AudioLowerVolume>
--- <XF86AudioMute>
--- <XF86AudioRaiseVolume>
--- <XF86AudioPlay>
--- <XF86AudioStop>
--- <XF86AudioPrev>
--- <XF86AudioNext>
--- <XF86HomePage>
--- <XF86Mail>
--- <XF86Start>
--- <XF86Search>
--- <XF86AudioRecord>
--- <XF86Calculator>
--- <XF86Memo>
--- <XF86ToDoList>
--- <XF86Calendar>
--- <XF86PowerDown>
--- <XF86ContrastAdjust>
--- <XF86RockerUp>
--- <XF86RockerDown>
--- <XF86RockerEnter>
--- <XF86Back>
--- <XF86Forward>
--- <XF86Stop>
--- <XF86Refresh>
--- <XF86PowerOff>
--- <XF86WakeUp>
--- <XF86Eject>
--- <XF86ScreenSaver>
--- <XF86WWW>
--- <XF86Sleep>
--- <XF86Favorites>
--- <XF86AudioPause>
--- <XF86AudioMedia>
--- <XF86MyComputer>
--- <XF86VendorHome>
--- <XF86LightBulb>
--- <XF86Shop>
--- <XF86History>
--- <XF86OpenURL>
--- <XF86AddFavorite>
--- <XF86HotLinks>
--- <XF86BrightnessAdjust>
--- <XF86Finance>
--- <XF86Community>
--- <XF86AudioRewind>
--- <XF86XF86BackForward>
--- <XF86Launch0>-<XF86Launch9>, <XF86LaunchA>-<XF86LaunchF>
--- <XF86ApplicationLeft>
--- <XF86ApplicationRight>
--- <XF86Book>
--- <XF86CD>
--- <XF86Calculater>
--- <XF86Clear>
--- <XF86Close>
--- <XF86Copy>
--- <XF86Cut>
--- <XF86Display>
--- <XF86DOS>
--- <XF86Documents>
--- <XF86Excel>
--- <XF86Explorer>
--- <XF86Game>
--- <XF86Go>
--- <XF86iTouch>
--- <XF86LogOff>
--- <XF86Market>
--- <XF86Meeting>
--- <XF86MenuKB>
--- <XF86MenuPB>
--- <XF86MySites>
--- <XF86New>
--- <XF86News>
--- <XF86OfficeHome>
--- <XF86Open>
--- <XF86Option>
--- <XF86Paste>
--- <XF86Phone>
--- <XF86Q>
--- <XF86Reply>
--- <XF86Reload>
--- <XF86RotateWindows>
--- <XF86RotationPB>
--- <XF86RotationKB>
--- <XF86Save>
--- <XF86ScrollUp>
--- <XF86ScrollDown>
--- <XF86ScrollClick>
--- <XF86Send>
--- <XF86Spell>
--- <XF86SplitScreen>
--- <XF86Support>
--- <XF86TaskPane>
--- <XF86Terminal>
--- <XF86Tools>
--- <XF86Travel>
--- <XF86UserPB>
--- <XF86User1KB>
--- <XF86User2KB>
--- <XF86Video>
--- <XF86WheelButton>
--- <XF86Word>
--- <XF86Xfer>
--- <XF86ZoomIn>
--- <XF86ZoomOut>
--- <XF86Away>
--- <XF86Messenger>
--- <XF86WebCam>
--- <XF86MailForward>
--- <XF86Pictures>
--- <XF86Music>
--- <XF86TouchpadToggle>
--- <XF86_Switch_VT_1>-<XF86_Switch_VT_12>
--- <XF86_Ungrab>
--- <XF86_ClearGrab>
--- <XF86_Next_VMode>
--- <XF86_Prev_VMode>
-
--- Mouse symbols
-
--- button1 = left mouse button
--- button2 = middle mouse button
--- button3 = right mouse button
--- button4 = scroll down
--- button5 = scroll up

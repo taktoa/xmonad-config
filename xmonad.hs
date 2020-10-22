@@ -3,9 +3,9 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE LiberalTypeSynonyms   #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE RankNTypes            #-}
 
-import qualified Data.Map                    as M
+import qualified Data.Map                     as M
 import           Data.Monoid
 import           XMonad
 import           XMonad.Actions.FloatSnap
@@ -13,15 +13,19 @@ import           XMonad.Hooks.EwmhDesktops
 import           XMonad.Hooks.ManageDocks
 import           XMonad.Hooks.ManageHelpers
 import           XMonad.Hooks.SetWMName
+import           XMonad.Layout.Gaps
+import qualified XMonad.Layout.Groups         as G
+import qualified XMonad.Layout.Groups.Helpers as GH
 import           XMonad.Layout.NoBorders
 import           XMonad.Layout.ResizableTile
-import qualified XMonad.StackSet             as W
+import           XMonad.Layout.ThreeColumns
+import qualified XMonad.StackSet              as W
 import           XMonad.Util.Cursor
 import           XMonad.Util.EZConfig
 
-import           Control.Concurrent          (forkIO, threadDelay)
+import           Control.Concurrent           (forkIO, threadDelay)
 import           Control.Monad
-import           System.IO                   (hFlush, stdout)
+import           System.IO                    (hFlush, stdout)
 
 main :: IO ()
 main = xmonad myConfig
@@ -97,17 +101,23 @@ myKeymap cfg = [ ("M4-S-<Return>",   startTerminal)
                , ("M1-M4-w",         rofiWindowCmd)
                , ("M4--",            shrinkTile)
                , ("M4-=",            expandTile)
+               , ("C-M4-s",          groupSend id G.splitGroup)
+               , ("C-M4-j",          GH.moveToGroupUp   True)
+               , ("C-M4-k",          GH.moveToGroupDown True)
                ]
   where
     startTerminal   = spawn $ XMonad.terminal cfg
     closeFocused    = kill
     nextLayout      = sendMessage NextLayout
     resetLayout     = setLayout $ XMonad.layoutHook cfg
-    focusDown       = windows W.focusDown
-    focusUp         = windows W.focusUp
-    swapMaster      = windows W.swapMaster
-    swapDown        = windows W.swapDown
-    swapUp          = windows W.swapUp
+    focusDown       = groupSend toFocused G.focusDown
+    focusUp         = groupSend toFocused G.focusUp
+    swapMaster      = groupSend toFocused G.swapMaster
+    swapDown        = groupSend toFocused G.swapDown
+    swapUp          = groupSend toFocused G.swapUp
+    groupSend :: (G.GroupsMessage -> G.GroupsMessage) -> G.ModifySpec -> X ()
+    groupSend f x   = sendMessage (f (G.Modify x))
+    toFocused       = G.ToFocused . SomeMessage
     shrinkMaster    = sendMessage Shrink
     expandMaster    = sendMessage Expand
     retileWindow    = withFocused $ windows . W.sink
@@ -166,13 +176,15 @@ myLayout = modifyL unmodified
     -- default tiling algorithm partitions the screen into two panes
     tiled   = ResizableTall nmaster delta ratio []
     -- The default number of windows in the master pane
-    nmaster = 1
+    nmaster = 0
     -- Default proportion of screen occupied by master pane
     ratio   = 1/2
     -- Percent of screen to increment by when resizing panes
     delta   = 3/100
     -- Functions to run on the layout
-    modifyL = smartBorders . avoidStruts
+    modifyL = smartBorders . avoidStruts . makeColumns . surroundGap 10
+    makeColumns l = G.group l $ ThreeCol 1 delta ratio
+    surroundGap s = gaps [(U, s), (D, s), (R, s), (L, s)]
 
 -- | My event logging hook
 myLogHook :: X ()
